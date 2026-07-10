@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Save Image 'n Context</title>
+  <link rel="stylesheet" href="options.css" />
+  <script src="options.js" defer></script>
+</head>
+
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Local research log</p>
+        <h1>Save Image 'n Context</h1>
+        <p class="subtitle">
+          Right-click any web image to save the file and record source-page
+          context for citation, research, and later review.
+        </p>
+      </div>
+    </header>
+
+    <section class="panel privacy-message">
+      <h2>Privacy</h2>
+      <p>
+        This extension does not upload your captures. All records are stored
+        locally in <code>chrome.storage.local</code> on this device.
+      </p>
+      <p>
+        Metadata is extracted only when you use the right-click
+        &ldquo;Save image + context&rdquo; menu.
+      </p>
+    </section>
+
+    <section class="toolbar panel">
+      <div>
+        <h2>Export citation log</h2>
+        <p>Download your saved records as JSON or CSV.</p>
+      </div>
+
+      <div class="export-buttons">
+        <button class="btn" id="export-json">Export JSON</button>
+        <button class="btn btn-primary" id="export-csv">Export CSV</button>
+        <button class="btn btn-danger" id="clear-records">Clear local log</button>
+      </div>
+    </section>
+
+    <section class="panel logs-panel">
+      <div class="logs-header">
+        <div>
+          <h2>Recent captures</h2>
+          <p id="log-count">Loading records...</p>
+        </div>
+
+        <button class="btn btn-secondary" id="view-last-20">
+          Refresh last 20
+        </button>
+      </div>
+
+      <p id="empty-state" class="empty-state" hidden>
+        No captures yet. Right-click an image on any webpage and choose
+        &ldquo;Save image + context&rdquo; to start your log.
+      </p>
+
+      <ul id="records" class="record-list"></ul>
+    </section>
+  </main>
+</body>
+</html>

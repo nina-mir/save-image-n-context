@@ -1,0 +1,23 @@
+# Packaged extension builds
+*.zip
+*.crx
+*.pem
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (in case tooling is ever added)
+node_modules/
+
+# Logs and temp files
+*.log
+tmp/
