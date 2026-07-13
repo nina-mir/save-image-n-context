@@ -79,7 +79,10 @@
     <p>
       Metadata is read from a page only at the moment you choose
       "Save image + context" from the right-click menu. The extension does not
-      read, track, or record your browsing at any other time.
+      read, track, or record your browsing at any other time. This is enforced
+      by Chrome's permission model: the extension uses the
+      <code>activeTab</code> permission, which only grants access to the
+      current page when you invoke the menu.
     </p>
 
     <h2>What is never collected</h2>
@@ -111,11 +114,12 @@
       <tr><td><code>scripting</code></td>
           <td>Injects the metadata-extraction script into the current page
               when you use the menu.</td></tr>
-      <tr><td>Access to websites (<code>&lt;all_urls&gt;</code>)</td>
-          <td>Researchers save images from arbitrary websites, so the
-              extension must be able to run its extraction script on the page
-              you invoke it from. It only does so when you use the
-              right-click menu.</td></tr>
+      <tr><td><code>activeTab</code></td>
+          <td>Grants temporary access to the current page only when you use
+              the right-click &ldquo;Save image + context&rdquo; menu, so the
+              extraction script can read the clicked image's context. The
+              extension cannot access any other tabs, or any page at any
+              other time.</td></tr>
     </table>
 
     <h2>Changes to this policy</h2>
@@ -128,7 +132,7 @@
     <h2>Contact</h2>
     <p>
       Questions about this policy can be raised on the project's
-      <a href="https://github.com/YOUR-USERNAME/save-image-n-context/issues">GitHub issue tracker</a>.
+      <a href="https://github.com/nina-mir/save-image-n-context/issues">GitHub issue tracker</a>.
     </p>
   </main>
 </body>

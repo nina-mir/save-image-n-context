@@ -12,8 +12,7 @@
   "action": {
     "default_title": "Save Image 'n Context"
   },
-  "permissions": ["contextMenus", "storage", "downloads", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": ["contextMenus", "storage", "downloads", "scripting", "activeTab"],
   "background": {
     "service_worker": "background.js"
   },

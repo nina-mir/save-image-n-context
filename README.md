@@ -74,7 +74,7 @@ A green ✓ badge means the image and full page context were captured. An amber 
 | `downloads` | Saves the selected image and your JSON/CSV exports. |
 | `storage` | Stores citation records locally in your browser. |
 | `scripting` | Injects the metadata-extraction script when you use the menu. |
-| `<all_urls>` (host access) | Lets the extraction script run on whatever page you invoke it from. It runs only when you use the right-click menu. |
+| `activeTab` | Grants temporary access to the current page only when you use the right-click menu, so the extraction script can read the clicked image's context. The extension has no access to any other tabs, or to any page at any other time. |
 
 ## Repository structure
 

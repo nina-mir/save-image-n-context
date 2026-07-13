@@ -14,7 +14,7 @@ Citation records are stored only in your browser's local extension storage (`chr
 
 ## When data is collected
 
-Metadata is read from a page only at the moment you choose "Save image + context" from the right-click menu. The extension does not read, track, or record your browsing at any other time.
+Metadata is read from a page only at the moment you choose "Save image + context" from the right-click menu. The extension does not read, track, or record your browsing at any other time. This is enforced by Chrome's permission model: the extension uses the `activeTab` permission, which only grants access to the current page when you invoke the menu.
 
 ## What is never collected
 
@@ -32,7 +32,7 @@ All saved records can be viewed on the extension's options page, exported as JSO
 | `downloads` | Saves the selected image and your JSON/CSV exports. |
 | `storage` | Stores citation records locally in your browser. |
 | `scripting` | Injects the metadata-extraction script into the current page when you use the menu. |
-| Access to websites (`<all_urls>`) | Researchers save images from arbitrary websites, so the extension must be able to run its extraction script on the page you invoke it from. It only does so when you use the right-click menu. |
+| `activeTab` | Grants temporary access to the current page only when you use the right-click "Save image + context" menu, so the extraction script can read the clicked image's context. The extension cannot access any other tabs, or any page at any other time. |
 
 ## Changes to this policy
 

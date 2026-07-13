@@ -28,5 +28,8 @@ Initial Chrome Web Store release candidate.
 
 ### Changed (from development builds)
 - Renamed extension to "Save Image 'n Context"; production manifest
-  description; removed `tabs` and `activeTab` permissions (redundant
-  with host permissions).
+  description.
+- Replaced broad host access (`<all_urls>`) with `activeTab`: the
+  extension can only access the page you invoke the right-click menu
+  on, and only at that moment. Also removed the redundant `tabs`
+  permission.
