@@ -15,13 +15,18 @@ Anyone who collects images and later needs to cite, verify, or trace them: acade
 
 **Captured with every image**
 
-- Image metadata: image URL, alt text, title, aria-label, figure caption, referrer policy
+- Image metadata: saved file name, image URL, alt text, title, aria-label, figure caption, referrer policy
 - Page metadata: page URL and title, canonical URL, hostname, meta description, Open Graph title and description
 - Semantic context: nearest heading, nearest paragraph, enclosing link URL and text
 
 **Managing your log**
 
-- Options page with your recent captures and their captured context
+- Click the toolbar icon to open your log: recent captures, thumbnails, and their captured context
+- Each record shows the file name the image was saved under
+- Search the whole log by page title, site, caption, file name, or note
+- "Where did this image come from?": choose or drop an image file to find its record (only the file name is read)
+- Copy a ready-made citation for any record, as plain text or Markdown
+- Add your own notes to any record
 - Export the full log as JSON or CSV (Excel-safe)
 - Clear the local log at any time
 - Stores up to 5,000 records in `chrome.storage.local`
@@ -62,9 +67,9 @@ Coming soon.
 1. Right-click any image on a webpage.
 2. Choose **Save image + context**.
 3. The image downloads and a citation record is saved locally.
-4. Open the extension's options page to review, export, or clear your log.
+4. Click the extension's toolbar icon to open your log, where you can search, annotate, copy citations, export, or clear it.
 
-A green ✓ badge means the image and full page context were captured. An amber ! badge means the image was saved but page context could not be fully captured (for example, on restricted pages).
+A green ✓ badge means the image and full page context were captured. An amber ! badge means something was incomplete: either page context could not be fully captured (for example, on restricted pages) or the image file did not finish downloading. The log says which.
 
 ## Permissions
 
@@ -106,10 +111,8 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Roadmap
 
-- Search and filtering
-- Editable notes on records
-- Thumbnail previews
 - Citation export formats (APA, MLA, Chicago)
+- Sidecar citation file saved next to each image
 
 ## License
 

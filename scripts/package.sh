@@ -32,8 +32,8 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 # Sanity check: warn if the 128px icon (required by the Web Store) is missing.
-if [[ ! -f "$EXT_DIR/icons/icon128.png" ]]; then
-  echo "Warning: icons/icon128.png is missing — the Web Store requires a 128x128 icon." >&2
+if [[ ! -f "$EXT_DIR/icons/icon-128.png" ]]; then
+  echo "Warning: icons/icon-128.png is missing — the Web Store requires a 128x128 icon." >&2
 fi
 
 OUT_ZIP="$REPO_ROOT/save-image-n-context-v$VERSION.zip"

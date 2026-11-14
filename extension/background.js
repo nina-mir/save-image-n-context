@@ -2,6 +2,14 @@
 
 const MAX_RECORDS = 5000;
 const MENU_ID = "save-image-and-context";
+const EXTRACT_MESSAGE = "DOWNLOAD_EXTRACT_IMAGE_METADATA";
+
+// How far back to look when matching a download event to a record.
+// Chrome can reuse download IDs after history is cleared, so old
+// records are never matched.
+const DOWNLOAD_MATCH_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/* ---------- Content script messaging ---------- */
 
 // Send a message to the content script, retrying once after a short delay.
 function sendMessageWithRetry(tabId, message, retryDelayMs = 350) {
@@ -40,7 +48,24 @@ async function ensureContentScript(tabId) {
   }
 }
 
-// Badge feedback: green check on full capture, amber "!" on partial capture.
+// Ask the page for the image's context. Returns { response, lastError }.
+async function requestMetadata(tabId, imageUrl) {
+  const message = { type: EXTRACT_MESSAGE, imageUrl };
+
+  await ensureContentScript(tabId);
+  let result = await sendMessageWithRetry(tabId, message);
+
+  // If messaging still failed, try one more inject + retry.
+  if (result.lastError && (await ensureContentScript(tabId))) {
+    result = await sendMessageWithRetry(tabId, message);
+  }
+
+  return result;
+}
+
+/* ---------- Badge ---------- */
+
+// Badge feedback: green check on full capture, amber "!" on a problem.
 async function flashBadge(text, color) {
   try {
     await chrome.action.setBadgeBackgroundColor({ color });
@@ -50,6 +75,151 @@ async function flashBadge(text, color) {
     console.warn("Badge update failed:", err);
   }
 }
+
+const flashOk = () => flashBadge("✓", "#2e7d32");
+const flashWarn = () => flashBadge("!", "#b26a00");
+
+/* ---------- Record storage ---------- */
+
+// All writes to the record list go through this queue, so a capture and
+// a download event arriving together cannot overwrite each other.
+// `mutate` receives the records array and returns true if it changed it.
+let writeChain = Promise.resolve();
+
+function updateRecords(mutate) {
+  const run = writeChain.then(async () => {
+    const { records = [] } = await chrome.storage.local.get({ records: [] });
+    const changed = await mutate(records);
+    if (changed) await chrome.storage.local.set({ records });
+    return changed;
+  });
+
+  writeChain = run.catch(() => {});
+  return run;
+}
+
+// Build a record with the same set of fields whether or not the page
+// context could be read, so exports always have a consistent shape.
+function buildRecord({ createdAt, imageUrl, tab, response, reason, downloadId }) {
+  const r = response || {};
+
+  return {
+    id: crypto.randomUUID(),
+    createdAt,
+    ok: !reason,
+    reason: reason || "",
+    pageUrl: r.pageUrl ?? tab.url ?? null,
+    pageTitle: r.pageTitle ?? tab.title ?? null,
+    canonicalUrl: r.canonicalUrl ?? "",
+    hostname: r.hostname ?? "",
+    metaDescription: r.metaDescription ?? "",
+    ogTitle: r.ogTitle ?? "",
+    ogDescription: r.ogDescription ?? "",
+    imageUrl: r.imageUrl ?? imageUrl ?? null,
+    alt: r.alt ?? "",
+    title: r.title ?? "",
+    ariaLabel: r.ariaLabel ?? "",
+    caption: r.caption ?? "",
+    referrerPolicy: r.referrerPolicy ?? "",
+    downloadId,
+    fileName: "",
+    downloadState: downloadId === null ? "failed" : "in_progress",
+    downloadError: "",
+    notes: "",
+    linkedHref: r.linkedHref ?? "",
+    linkedText: r.linkedText ?? "",
+    nearestHeading: r.nearestHeading ?? "",
+    nearestParagraph: r.nearestParagraph ?? ""
+  };
+}
+
+// Treat a capture as a duplicate if the previous record has the same
+// pageUrl + imageUrl and was created within the last 5 seconds.
+function isProbablyDuplicate(records, newRecord) {
+  const last = records[records.length - 1];
+  if (!last) return false;
+
+  const t1 = new Date(last.createdAt).getTime();
+  const t2 = new Date(newRecord.createdAt).getTime();
+
+  return (
+    last.pageUrl === newRecord.pageUrl &&
+    last.imageUrl === newRecord.imageUrl &&
+    Math.abs(t2 - t1) < 5000
+  );
+}
+
+/* ---------- Download tracking ---------- */
+
+// Only the file name is kept, not the full path: the path usually
+// contains the user's OS account name, which has no place in an export.
+function baseName(path) {
+  return String(path || "").split(/[\\/]/).pop() || "";
+}
+
+// Copy what Chrome knows about a download onto its record.
+// Returns true if the record changed.
+function applyDownloadInfo(record, { filename, state, error }) {
+  let changed = false;
+
+  const name = baseName(filename);
+  if (name && record.fileName !== name) {
+    record.fileName = name;
+    changed = true;
+  }
+
+  if (state && record.downloadState !== state) {
+    record.downloadState = state;
+    changed = true;
+  }
+
+  if (error && record.downloadError !== error) {
+    record.downloadError = error;
+    changed = true;
+  }
+
+  return changed;
+}
+
+function findRecordByDownloadId(records, downloadId) {
+  const cutoff = Date.now() - DOWNLOAD_MATCH_WINDOW_MS;
+
+  for (let i = records.length - 1; i >= 0; i--) {
+    const record = records[i];
+    if (new Date(record.createdAt).getTime() < cutoff) return null;
+    if (record.downloadId === downloadId) return record;
+  }
+
+  return null;
+}
+
+// Chrome decides the final file name, and reports success or failure,
+// some time after the download starts. Keep the record in step.
+chrome.downloads.onChanged.addListener((delta) => {
+  const info = {
+    filename: delta.filename?.current,
+    state: delta.state?.current,
+    error: delta.error?.current
+  };
+
+  if (!info.filename && !info.state && !info.error) return;
+
+  updateRecords((records) => {
+    const record = findRecordByDownloadId(records, delta.id);
+    return record ? applyDownloadInfo(record, info) : false;
+  })
+    .then((changed) => {
+      if (changed && info.state === "interrupted") flashWarn();
+    })
+    .catch((err) => console.error("Failed to update download info:", err));
+});
+
+/* ---------- Toolbar icon + context menu ---------- */
+
+// Clicking the toolbar icon opens the log.
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage();
+});
 
 chrome.runtime.onInstalled.addListener(() => {
   // onInstalled also fires on extension updates; remove any existing
@@ -76,164 +246,77 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const imageUrl = info.srcUrl;
 
   // 1. Start the image download.
-  chrome.downloads.download(
-    {
+  let downloadId = null;
+  let downloadError = "";
+
+  try {
+    downloadId = await chrome.downloads.download({
       url: imageUrl,
       conflictAction: "uniquify",
       saveAs: false
-    },
-    async (downloadId) => {
-      const finalDownloadId = chrome.runtime.lastError ? null : downloadId;
+    });
+  } catch (err) {
+    downloadError = err?.message || "download_failed_to_start";
+    console.error("Error starting download:", downloadError);
+  }
 
-      if (chrome.runtime.lastError) {
-        console.error("Error starting download:", chrome.runtime.lastError.message);
+  // 2. Read the image's context from the page.
+  const { response, lastError } = await requestMetadata(tab.id, imageUrl);
+
+  let reason = "";
+  if (lastError) {
+    // No content script receiver (e.g. restricted page): the record
+    // falls back to what the tab alone can tell us.
+    reason = "no_content_script";
+  } else if (!response?.ok) {
+    reason = response?.error || "metadata_extraction_failed";
+  }
+
+  const record = buildRecord({
+    createdAt,
+    imageUrl,
+    tab,
+    response: lastError ? null : response,
+    reason,
+    downloadId
+  });
+  record.downloadError = downloadError;
+
+  // 3. Append the record to local storage.
+  try {
+    await updateRecords(async (records) => {
+      if (isProbablyDuplicate(records, record)) return false;
+
+      // The download may already have a file name, or have finished,
+      // before this point; pick up whatever Chrome knows so far.
+      if (downloadId !== null) {
+        const [item] = await chrome.downloads.search({ id: downloadId });
+        if (item) applyDownloadInfo(record, item);
       }
 
-      // 2. Ensure the content script exists, then request metadata.
-      await ensureContentScript(tab.id);
+      records.push(record);
 
-      let { response, lastError } = await sendMessageWithRetry(
-        tab.id,
-        { type: "DOWNLOAD_EXTRACT_IMAGE_METADATA", imageUrl },
-        350
-      );
-
-      // If messaging still failed, try one more inject + retry.
-      if (lastError) {
-        const injected = await ensureContentScript(tab.id);
-
-        if (injected) {
-          const retryResult = await sendMessageWithRetry(
-            tab.id,
-            { type: "DOWNLOAD_EXTRACT_IMAGE_METADATA", imageUrl },
-            350
-          );
-
-          response = retryResult.response;
-          lastError = retryResult.lastError;
-        }
+      // Prune oldest records beyond the cap.
+      if (records.length > MAX_RECORDS) {
+        records.splice(0, records.length - MAX_RECORDS);
       }
 
-      let record;
+      return true;
+    });
+  } catch (err) {
+    // Most likely a storage quota error; the image may have downloaded,
+    // but the citation record was not saved.
+    console.error("Failed to save citation record:", err);
+    await flashWarn();
+    return;
+  }
 
-      if (lastError) {
-        // No content script receiver (e.g. restricted page): fall back
-        // to the metadata available from the tab alone.
-        record = {
-          id: crypto.randomUUID(),
-          createdAt,
-          ok: false,
-          reason: "no_content_script",
-          pageUrl: tab.url || null,
-          pageTitle: tab.title || null,
-          canonicalUrl: "",
-          hostname: "",
-          metaDescription: "",
-          ogTitle: "",
-          ogDescription: "",
-          imageUrl: imageUrl || null,
-          caption: "",
-          referrerPolicy: "",
-          downloadId: finalDownloadId,
-          notes: "",
-          linkedHref: "",
-          linkedText: "",
-          nearestHeading: "",
-          nearestParagraph: ""
-        };
-      } else if (!response?.ok) {
-        // Content script responded but could not fully extract metadata.
-        record = {
-          id: crypto.randomUUID(),
-          createdAt,
-          ok: false,
-          reason: response?.error || "metadata_extraction_failed",
-          pageUrl: response?.pageUrl ?? tab.url ?? null,
-          pageTitle: response?.pageTitle ?? tab.title ?? null,
-          canonicalUrl: response?.canonicalUrl ?? "",
-          hostname: response?.hostname ?? "",
-          metaDescription: response?.metaDescription ?? "",
-          ogTitle: response?.ogTitle ?? "",
-          ogDescription: response?.ogDescription ?? "",
-          imageUrl: response?.imageUrl ?? imageUrl ?? null,
-          caption: response?.caption ?? "",
-          referrerPolicy: response?.referrerPolicy ?? "",
-          downloadId: finalDownloadId,
-          notes: "",
-          linkedHref: "",
-          linkedText: "",
-          nearestHeading: "",
-          nearestParagraph: ""
-        };
-      } else {
-        record = {
-          id: crypto.randomUUID(),
-          createdAt,
-          ok: true,
-          pageUrl: response?.pageUrl ?? tab.url ?? null,
-          pageTitle: response?.pageTitle ?? tab.title ?? null,
-          canonicalUrl: response?.canonicalUrl ?? "",
-          hostname: response?.hostname ?? "",
-          metaDescription: response?.metaDescription ?? "",
-          ogTitle: response?.ogTitle ?? "",
-          ogDescription: response?.ogDescription ?? "",
-          imageUrl: response?.imageUrl ?? imageUrl ?? null,
-          alt: response?.alt ?? "",
-          title: response?.title ?? "",
-          ariaLabel: response?.ariaLabel ?? "",
-          caption: response?.caption ?? "",
-          referrerPolicy: response?.referrerPolicy ?? "",
-          downloadId: finalDownloadId,
-          notes: "",
-          linkedHref: response?.linkedHref ?? "",
-          linkedText: response?.linkedText ?? "",
-          nearestHeading: response?.nearestHeading ?? "",
-          nearestParagraph: response?.nearestParagraph ?? ""
-        };
-      }
+  const downloadFailed =
+    record.downloadState === "failed" || record.downloadState === "interrupted";
 
-      if (record.ok) {
-        await flashBadge("\u2713", "#2e7d32");
-      } else {
-        await flashBadge("!", "#b26a00");
-      }
-
-      // 3. Append the record to local storage.
-      try {
-        const { records = [] } = await chrome.storage.local.get({ records: [] });
-
-        if (!isProbablyDuplicate(records, record)) {
-          records.push(record);
-
-          // Prune oldest records beyond the cap.
-          if (records.length > MAX_RECORDS) {
-            records.splice(0, records.length - MAX_RECORDS);
-          }
-
-          await chrome.storage.local.set({ records });
-        }
-      } catch (err) {
-        // Most likely a storage quota error; the image download itself
-        // has already succeeded, but the citation record was not saved.
-        console.error("Failed to save citation record:", err);
-        await flashBadge("!", "#b26a00");
-      }
-    }
-  );
+  if (record.ok && !downloadFailed) {
+    await flashOk();
+  } else {
+    await flashWarn();
+  }
 });
-
-// Treat a capture as a duplicate if the previous record has the same
-// pageUrl + imageUrl and was created within the last 5 seconds.
-function isProbablyDuplicate(records, newRecord) {
-  const last = records[records.length - 1];
-  if (!last) return false;
-
-  const t1 = new Date(last.createdAt).getTime();
-  const t2 = new Date(newRecord.createdAt).getTime();
-
-  return (
-    last.pageUrl === newRecord.pageUrl &&
-    last.imageUrl === newRecord.imageUrl &&
-    Math.abs(t2 - t1) < 5000
-  );
-}

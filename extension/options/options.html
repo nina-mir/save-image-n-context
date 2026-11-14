@@ -46,16 +46,43 @@
       </div>
     </section>
 
+    <section class="panel finder">
+      <div class="finder__search">
+        <label class="finder__label" for="search">Search your log</label>
+        <input
+          class="input"
+          id="search"
+          type="search"
+          placeholder="Page title, site, caption, file name, notes&hellip;"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="finder__lookup">
+        <span class="finder__label">Where did this image come from?</span>
+        <div class="finder__lookup-row">
+          <button class="btn" id="lookup-button" type="button">Choose an image file</button>
+          <span class="finder__hint">
+            or drop one anywhere on this page. Only the file name is read.
+          </span>
+        </div>
+        <input id="lookup-input" type="file" accept="image/*" hidden />
+      </div>
+    </section>
+
     <section class="panel logs-panel">
       <div class="logs-header">
         <div>
-          <h2>Recent captures</h2>
+          <h2 id="logs-title">Recent captures</h2>
           <p id="log-count">Loading records...</p>
         </div>
 
-        <button class="btn btn-secondary" id="view-last-20">
-          Refresh last 20
-        </button>
+        <div class="logs-actions">
+          <button class="btn btn-secondary" id="clear-filter" hidden>
+            Show recent captures
+          </button>
+          <button class="btn btn-secondary" id="view-last-20">Refresh</button>
+        </div>
       </div>
 
       <p id="empty-state" class="empty-state" hidden>
@@ -63,8 +90,23 @@
         &ldquo;Save image + context&rdquo; to start your log.
       </p>
 
+      <p id="no-matches" class="empty-state" hidden></p>
+
       <ul id="records" class="record-list"></ul>
     </section>
+
+    <footer class="page-footer">
+      Something missing or not working?
+      <a
+        href="https://github.com/nina-mir/save-image-n-context/issues"
+        target="_blank"
+        rel="noreferrer"
+      >Send feedback on GitHub</a>
+    </footer>
   </main>
+
+  <div id="drop-overlay" class="drop-overlay" hidden>
+    Drop the image to find its record
+  </div>
 </body>
 </html>

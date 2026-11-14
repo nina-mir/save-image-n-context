@@ -5,6 +5,33 @@ Versions correspond to Chrome Web Store releases and git tags.
 
 ## [Unreleased]
 
+## [0.6] — 2026-11-14
+
+### Added
+- Clicking the toolbar icon opens the log.
+- Records now store the file name the image was saved under
+  (`fileName`), shown in the log and included in JSON/CSV exports.
+  Only the name is stored, never the full path.
+- Download outcome tracking (`downloadState`, `downloadError`): a
+  download that fails or is interrupted is flagged with the amber badge
+  and a note in the log, instead of being reported as a success.
+- Search across the whole log.
+- "Where did this image come from?" lookup: choose or drop an image
+  file to find its record by file name. The file itself is not read.
+- Copy citation (plain text or Markdown) for any record.
+- Editable notes on each record.
+- Feedback link to the GitHub issue tracker.
+
+### Changed
+- Redesigned log page: thumbnails, status chips, grouped context.
+- Fallback records now have the same fields as full records, so
+  exports have a consistent shape.
+- Record writes are queued so near-simultaneous captures and download
+  updates cannot overwrite each other.
+
+### Fixed
+- `scripts/package.sh` checked for the wrong icon file name.
+
 ## [0.5] — 2026-07-09
 
 Initial Chrome Web Store release candidate.

@@ -1,12 +1,12 @@
 # Privacy Policy — Save Image 'n Context
 
-Last updated: July 9, 2026
+Last updated: November 14, 2026
 
 **Save Image 'n Context does not collect, transmit, sell, or share any data. Everything it saves stays in your browser, on your device.**
 
 ## What the extension does
 
-Save Image 'n Context lets you right-click an image on a webpage to (1) download the image file to your computer and (2) save a local "citation record" describing where the image came from: the page URL and title, the image URL, its caption and alt text, nearby headings and paragraph text, and standard page metadata such as the canonical URL and Open Graph tags.
+Save Image 'n Context lets you right-click an image on a webpage to (1) download the image file to your computer and (2) save a local "citation record" describing where the image came from: the page URL and title, the image URL, its caption and alt text, nearby headings and paragraph text, and standard page metadata such as the canonical URL and Open Graph tags. The record also keeps the name of the saved file (not its folder path) and any notes you add yourself.
 
 ## What data is stored, and where
 
