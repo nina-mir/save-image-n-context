@@ -5,6 +5,12 @@ Versions correspond to Chrome Web Store releases and git tags.
 
 ## [Unreleased]
 
+### Added
+- Optional sidecar citation files: when the setting is on, each saved
+  image gets a `<image name>.json` file beside it containing its
+  citation record. Off by default. Records gain a `sidecarFileName`
+  field.
+
 ## [0.6] — 2026-11-14
 
 ### Added

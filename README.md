@@ -27,6 +27,7 @@ Anyone who collects images and later needs to cite, verify, or trace them: acade
 - "Where did this image come from?": choose or drop an image file to find its record (only the file name is read)
 - Copy a ready-made citation for any record, as plain text or Markdown
 - Add your own notes to any record
+- Optional: save a small citation file beside each image (`photo.jpg.json`) so the source travels with the file. Off by default; turn it on in the log page.
 - Export the full log as JSON or CSV (Excel-safe)
 - Clear the local log at any time
 - Stores up to 5,000 records in `chrome.storage.local`
@@ -76,7 +77,7 @@ A green ✓ badge means the image and full page context were captured. An amber 
 | Permission | Why it is needed |
 | --- | --- |
 | `contextMenus` | Adds the right-click "Save image + context" menu item. |
-| `downloads` | Saves the selected image and your JSON/CSV exports. |
+| `downloads` | Saves the selected image, your JSON/CSV exports, and (if you turn it on) a citation file beside each image. |
 | `storage` | Stores citation records locally in your browser. |
 | `scripting` | Injects the metadata-extraction script when you use the menu. |
 | `activeTab` | Grants temporary access to the current page only when you use the right-click menu, so the extraction script can read the clicked image's context. The extension has no access to any other tabs, or to any page at any other time. |
@@ -112,7 +113,6 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 ## Roadmap
 
 - Citation export formats (APA, MLA, Chicago)
-- Sidecar citation file saved next to each image
 
 ## License
 

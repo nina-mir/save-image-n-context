@@ -69,6 +69,7 @@ const CSV_HEADERS = [
   "canonicalUrl",
   "imageUrl",
   "fileName",
+  "sidecarFileName",
   "downloadState",
   "downloadError",
   "alt",
@@ -542,6 +543,11 @@ function buildRecordItem(r) {
     const file = el("span", "record__file", r.fileName);
     file.title = "Saved to your downloads folder as " + r.fileName;
     meta.append(file);
+    if (r.sidecarFileName) {
+      const sidecar = el("span", "record__file record__file--sidecar", "+ .json");
+      sidecar.title = "Citation file saved as " + r.sidecarFileName;
+      meta.append(sidecar);
+    }
   }
   body.append(meta);
 
@@ -639,6 +645,24 @@ async function render() {
   ul.replaceChildren(...shown.map(buildRecordItem));
 }
 
+/* ---------- Settings ---------- */
+
+async function getSettings() {
+  const { settings } = await chrome.storage.local.get({ settings: {} });
+  return settings || {};
+}
+
+async function wireSettings() {
+  const sidecar = document.getElementById("setting-sidecar");
+  sidecar.checked = Boolean((await getSettings()).sidecar);
+
+  sidecar.addEventListener("change", async () => {
+    const settings = await getSettings();
+    settings.sidecar = sidecar.checked;
+    await chrome.storage.local.set({ settings });
+  });
+}
+
 /* ---------- Search, lookup, and drag-and-drop wiring ---------- */
 
 function setQuery(query) {
@@ -716,6 +740,7 @@ function wire() {
   });
 
   wireDragAndDrop();
+  wireSettings();
 
   // Keep the list current while the page is open: new captures, and
   // file names arriving once a download finishes. Skipped while a note

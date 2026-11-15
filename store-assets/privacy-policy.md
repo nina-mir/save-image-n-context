@@ -10,7 +10,7 @@ Save Image 'n Context lets you right-click an image on a webpage to (1) download
 
 ## What data is stored, and where
 
-Citation records are stored only in your browser's local extension storage (`chrome.storage.local`) on your device. Downloaded images are saved by Chrome to your normal downloads location. Nothing is sent to the developer or to any server or third party.
+Citation records are stored only in your browser's local extension storage (`chrome.storage.local`) on your device. Downloaded images are saved by Chrome to your normal downloads location. If you turn on the optional citation-file setting, a small file containing that image's citation record is saved to the same location. Nothing is sent to the developer or to any server or third party.
 
 ## When data is collected
 

@@ -123,6 +123,7 @@ function buildRecord({ createdAt, imageUrl, tab, response, reason, downloadId })
     referrerPolicy: r.referrerPolicy ?? "",
     downloadId,
     fileName: "",
+    sidecarFileName: "",
     downloadState: downloadId === null ? "failed" : "in_progress",
     downloadError: "",
     notes: "",
@@ -193,6 +194,68 @@ function findRecordByDownloadId(records, downloadId) {
   return null;
 }
 
+/* ---------- Sidecar citation files (optional) ---------- */
+
+// When the "sidecar" setting is on, each image gets a small JSON file
+// saved beside it ("photo.jpg" -> "photo.jpg.json") holding its citation
+// record, so the source travels with the file.
+//
+// Safe to call more than once for the same download: the record is
+// claimed inside the write queue, so only the first call writes a file.
+async function writeSidecarIfWanted(downloadId) {
+  if (downloadId === null || downloadId === undefined) return;
+
+  const { settings } = await chrome.storage.local.get({ settings: {} });
+  if (!settings?.sidecar) return;
+
+  let snapshot = null;
+
+  await updateRecords((records) => {
+    const record = findRecordByDownloadId(records, downloadId);
+
+    if (
+      !record ||
+      record.downloadState !== "complete" ||
+      !record.fileName ||
+      record.sidecarFileName
+    ) {
+      return false;
+    }
+
+    record.sidecarFileName = record.fileName + ".json";
+    snapshot = { ...record };
+    return true;
+  });
+
+  if (!snapshot) return;
+
+  // downloadId only means something inside this browser profile.
+  const { downloadId: _unused, ...contents } = snapshot;
+  const json = JSON.stringify(contents, null, 2);
+
+  try {
+    // Service workers cannot create blob URLs, so use a data URL.
+    // A bare file name is saved to the default downloads folder, which
+    // is where the image went unless the user chose another location.
+    await chrome.downloads.download({
+      url: "data:application/json;charset=utf-8," + encodeURIComponent(json),
+      filename: snapshot.sidecarFileName,
+      conflictAction: "uniquify",
+      saveAs: false
+    });
+  } catch (err) {
+    console.error("Failed to save sidecar file:", err);
+
+    // Release the claim so the record does not point at a missing file.
+    await updateRecords((records) => {
+      const record = records.find((r) => r.id === snapshot.id);
+      if (!record) return false;
+      record.sidecarFileName = "";
+      return true;
+    });
+  }
+}
+
 // Chrome decides the final file name, and reports success or failure,
 // some time after the download starts. Keep the record in step.
 chrome.downloads.onChanged.addListener((delta) => {
@@ -210,6 +273,7 @@ chrome.downloads.onChanged.addListener((delta) => {
   })
     .then((changed) => {
       if (changed && info.state === "interrupted") flashWarn();
+      return writeSidecarIfWanted(delta.id);
     })
     .catch((err) => console.error("Failed to update download info:", err));
 });
@@ -310,6 +374,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     await flashWarn();
     return;
   }
+
+  // Covers a download that had already finished before the record existed.
+  writeSidecarIfWanted(downloadId).catch((err) =>
+    console.error("Failed to save sidecar file:", err)
+  );
 
   const downloadFailed =
     record.downloadState === "failed" || record.downloadState === "interrupted";

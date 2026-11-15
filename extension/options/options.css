@@ -231,6 +231,30 @@ code {
 }
 .finder__hint { font-size: 12px; color: var(--muted); line-height: 1.4; }
 
+/* ---- settings ---- */
+.setting__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  cursor: pointer;
+}
+.setting__row input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--navy);
+}
+.setting__title { display: block; font-size: 14px; font-weight: 700; }
+.setting__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.record__file--sidecar { color: var(--faint); }
+
 /* Shown while an image file is dragged over the page */
 .drop-overlay {
   position: fixed;
