@@ -5,6 +5,11 @@ Versions correspond to Chrome Web Store releases and git tags.
 
 ## [Unreleased]
 
+### Changed
+- New extension icon: rounded quotation marks with a landscape inside.
+- Log page: extension icon in the header and browser tab, and larger
+  text throughout, most noticeably the citation-file setting.
+
 ### Added
 - Local capture time: records now store `createdAtLocal` (for example
   `2026-11-14 21:31:07 -08:00`) and `timeZone` (for example

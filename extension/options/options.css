@@ -73,7 +73,7 @@ code {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   /* was a dark near-black block; now brand-aligned and lighter-weight */
   background: transparent;
   color: var(--ink);
@@ -88,18 +88,25 @@ code {
   text-transform: uppercase;
   color: #2563eb;
 }
+.hero__icon {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 15px;
+  box-shadow: 0 6px 18px rgba(20, 35, 95, .22);
+}
 .hero h1 {
   margin: 0 0 3px;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.05;
 }
 .subtitle {
   margin: 0;
-  max-width: 560px;
-  font-size: 13.5px;
-  line-height: 1.4;
+  max-width: 600px;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: #5b6b85;
 }
 
@@ -108,24 +115,24 @@ code {
    ========================================================================= */
 .panel {
   margin-bottom: 14px;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-card);
   background: #fff;
   box-shadow: var(--sh-card);
 }
 
-.panel h2 { margin-bottom: 2px; font-size: 14px; font-weight: 700; }
+.panel h2 { margin-bottom: 3px; font-size: 15.5px; font-weight: 700; }
 .privacy-message p,
 .toolbar p,
-.logs-header p { margin: 0; color: var(--muted); font-size: 12.5px; }
+.logs-header p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
 
 /* Privacy demoted to a quiet footnote-style panel */
 .privacy-message {
-  padding: 12px 18px;
+  padding: 13px 20px;
   background: #fbfcff;
 }
-.privacy-message p { font-size: 12px; color: var(--faint); line-height: 1.5; }
+.privacy-message p { font-size: 13px; color: var(--meta); line-height: 1.5; }
 
 /* =========================================================================
    Toolbar
@@ -195,11 +202,11 @@ code {
   width: 100%;
   border: 1px solid var(--btn-border);
   border-radius: var(--r-btn);
-  padding: 8px 11px;
+  padding: 9px 12px;
   background: #fff;
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
 }
 .input::placeholder { color: var(--faint); }
 .input:focus-visible,
@@ -219,8 +226,8 @@ code {
 }
 .finder__label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
+  margin-bottom: 7px;
+  font-size: 15.5px;
   font-weight: 700;
 }
 .finder__lookup-row {
@@ -229,28 +236,40 @@ code {
   gap: 10px;
   flex-wrap: wrap;
 }
-.finder__hint { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.finder__hint { font-size: 13px; color: var(--muted); line-height: 1.4; }
 
 /* ---- settings ---- */
 .setting__row {
   display: flex;
   align-items: flex-start;
-  gap: 11px;
+  gap: 14px;
   cursor: pointer;
 }
 .setting__row input {
   flex: none;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   margin: 2px 0 0;
   accent-color: var(--navy);
+  cursor: pointer;
 }
-.setting__title { display: block; font-size: 14px; font-weight: 700; }
+.setting__title { font-size: 16px; font-weight: 700; }
+.setting__badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11.5px;
+  font-weight: 600;
+  vertical-align: 2px;
+}
 .setting__hint {
   display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.5;
+  margin-top: 4px;
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--muted);
 }
 .record__file--sidecar { color: var(--faint); }
@@ -280,7 +299,7 @@ code {
   padding: 6px 4px 12px;
   margin: 0;
 }
-.logs-header h2 { margin: 0; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.logs-header h2 { margin: 0; font-size: 16.5px; font-weight: 700; overflow-wrap: anywhere; }
 .logs-actions { display: flex; gap: 8px; }
 
 /* =========================================================================
@@ -508,6 +527,7 @@ code {
     width: 100%;
     height: 160px;
   }
+  .hero__icon { width: 52px; height: 52px; border-radius: 12px; }
   .toolbar,
   .logs-header { align-items: stretch; flex-direction: column; }
   .export-buttons { width: 100%; }

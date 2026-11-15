@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Save Image 'n Context</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/icon-32.png" />
   <link rel="stylesheet" href="options.css" />
   <script src="options.js" defer></script>
 </head>
@@ -11,6 +12,7 @@
 <body>
   <main class="app-shell">
     <header class="hero">
+      <img class="hero__icon" src="../icons/icon.svg" alt="" width="64" height="64" />
       <div>
         <p class="eyebrow">Local research log</p>
         <h1>Save Image 'n Context</h1>
@@ -51,11 +53,12 @@
         <input id="setting-sidecar" type="checkbox" />
         <span>
           <span class="setting__title">Save a citation file next to each image</span>
+          <span class="setting__badge">Optional</span>
           <span class="setting__hint">
             Adds a small <code>.json</code> file beside every saved image
             (for example <code>photo.jpg.json</code>) with its source details,
-            so the citation travels with the file. Off by default. Notes added
-            later stay in this log and its exports.
+            so the citation travels with the file. Notes you add later stay in
+            this log and its exports.
           </span>
         </span>
       </label>
