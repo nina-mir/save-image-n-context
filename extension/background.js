@@ -79,6 +79,32 @@ async function flashBadge(text, color) {
 const flashOk = () => flashBadge("✓", "#2e7d32");
 const flashWarn = () => flashBadge("!", "#b26a00");
 
+/* ---------- Local time ---------- */
+
+// "2026-11-14 21:31:07 -08:00": the time on the user's own clock, with
+// its offset from UTC so the value is still unambiguous.
+function formatLocalTimestamp(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const offset = -date.getTimezoneOffset(); // minutes ahead of UTC
+  const sign = offset < 0 ? "-" : "+";
+  const abs = Math.abs(offset);
+
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ` +
+    `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
+  );
+}
+
+// The browser's time zone name, e.g. "America/Los_Angeles".
+function currentTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  } catch {
+    return "";
+  }
+}
+
 /* ---------- Record storage ---------- */
 
 // All writes to the record list go through this queue, so a capture and
@@ -105,7 +131,9 @@ function buildRecord({ createdAt, imageUrl, tab, response, reason, downloadId })
 
   return {
     id: crypto.randomUUID(),
-    createdAt,
+    createdAt, // UTC; the reference value for sorting and matching
+    createdAtLocal: formatLocalTimestamp(new Date(createdAt)),
+    timeZone: currentTimeZone(),
     ok: !reason,
     reason: reason || "",
     pageUrl: r.pageUrl ?? tab.url ?? null,

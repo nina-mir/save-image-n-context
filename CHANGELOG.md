@@ -6,6 +6,11 @@ Versions correspond to Chrome Web Store releases and git tags.
 ## [Unreleased]
 
 ### Added
+- Local capture time: records now store `createdAtLocal` (for example
+  `2026-11-14 21:31:07 -08:00`) and `timeZone` (for example
+  `America/Los_Angeles`) alongside the UTC `createdAt`. Both appear in
+  JSON, CSV and sidecar files. Exports fill them in for older records
+  using the browser's current time zone.
 - Optional sidecar citation files: when the setting is on, each saved
   image gets a `<image name>.json` file beside it containing its
   citation record. Off by default. Records gain a `sidecarFileName`

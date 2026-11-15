@@ -8,6 +8,52 @@ async function getRecords() {
   return records;
 }
 
+/* ---------- Local time ---------- */
+
+// "2026-11-14 21:31:07 -08:00": the time on the user's own clock, with
+// its offset from UTC so the value is still unambiguous.
+function formatLocalTimestamp(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const offset = -date.getTimezoneOffset(); // minutes ahead of UTC
+  const sign = offset < 0 ? "-" : "+";
+  const abs = Math.abs(offset);
+
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ` +
+    `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
+  );
+}
+
+// The browser's time zone name, e.g. "America/Los_Angeles".
+function currentTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  } catch {
+    return "";
+  }
+}
+
+// Records saved before local times were stored only have the UTC value.
+// For exports, fill the local time in from it, using this browser's
+// current time zone.
+function withLocalTime(record) {
+  if (record.createdAtLocal) return record;
+
+  const date = new Date(record.createdAt);
+  if (isNaN(date)) return record;
+
+  return {
+    ...record,
+    createdAtLocal: formatLocalTimestamp(date),
+    timeZone: record.timeZone || currentTimeZone()
+  };
+}
+
+async function getRecordsForExport() {
+  return (await getRecords()).map(withLocalTime);
+}
+
 /* ---------- JSON export ---------- */
 
 function downloadBlob(blob, filename) {
@@ -23,7 +69,7 @@ function downloadBlob(blob, filename) {
 }
 
 async function downloadJSON() {
-  const records = await getRecords();
+  const records = await getRecordsForExport();
   const jsonTxt = JSON.stringify(records, null, 2);
 
   downloadBlob(
@@ -62,6 +108,8 @@ function escapeCSV(value) {
 const CSV_HEADERS = [
   "id",
   "createdAt",
+  "createdAtLocal",
+  "timeZone",
   "ok",
   "reason",
   "pageTitle",
@@ -100,7 +148,7 @@ function recordsToCSV(records) {
 }
 
 async function downloadCSV() {
-  const records = await getRecords();
+  const records = await getRecordsForExport();
   const csvText = recordsToCSV(records);
 
   const BOM = "﻿"; // Helps Excel detect UTF-8.
