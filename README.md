@@ -23,7 +23,7 @@ Anyone who collects images and later needs to cite, verify, or trace them: acade
 
 - Click the toolbar icon to open your log: recent captures, thumbnails, and their captured context
 - Each record shows the file name the image was saved under
-- Search the whole log by page title, site, caption, file name, or note
+- Browse the log 20 records at a time, or search all of it by page title, site, caption, file name, or note
 - "Where did this image come from?": choose or drop an image file to find its record (only the file name is read)
 - Copy a ready-made citation for any record, as plain text or Markdown
 - Add your own notes to any record

@@ -9,6 +9,8 @@ Versions correspond to Chrome Web Store releases and git tags.
 - New extension icon: rounded quotation marks with a landscape inside.
 - Log page: extension icon in the header and browser tab, and larger
   text throughout, most noticeably the citation-file setting.
+- Log page: a "Show more" button under the list reveals 20 more
+  records per click, in recent captures and in search results.
 
 ### Added
 - Local capture time: records now store `createdAtLocal` (for example

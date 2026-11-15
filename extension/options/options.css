@@ -477,6 +477,10 @@ code {
 }
 .record__actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
+/* "Show more" under the list */
+.show-more { display: flex; justify-content: center; margin-top: 14px; }
+.show-more .btn { padding: 9px 22px; font-size: 14px; }
+
 /* =========================================================================
    Empty state
    ========================================================================= */

@@ -1,7 +1,8 @@
 "use strict";
 
-const RECENT_COUNT = 20;
-const MAX_RESULTS = 100;
+// How many records the list shows at first, and how many each click of
+// "Show more" adds.
+const PAGE_SIZE = 20;
 
 async function getRecords() {
   const { records } = await chrome.storage.local.get({ records: [] });
@@ -504,6 +505,10 @@ function buildCopyButton(record, format, label) {
 // not trigger a re-render underneath the person typing.
 let savingNote = false;
 
+// The most recent note save. The list waits for it before re-reading
+// records, so a note typed just before a click is never shown stale.
+let pendingNoteSave = Promise.resolve();
+
 async function saveNote(recordId, text) {
   savingNote = true;
   try {
@@ -534,7 +539,9 @@ function buildNotes(record) {
   // "change" fires when the field loses focus after an edit.
   textarea.addEventListener("change", async () => {
     try {
-      const saved = await saveNote(record.id, textarea.value.trim());
+      const save = saveNote(record.id, textarea.value.trim());
+      pendingNoteSave = save.catch(() => {});
+      const saved = await save;
       if (saved) {
         record.notes = textarea.value.trim();
         status.textContent = "Saved";
@@ -640,41 +647,54 @@ function buildRecordItem(r) {
 /* ---------- Record list ---------- */
 
 // What the list is showing: recent captures, search results, or the
-// records matching a file the person picked.
-const view = { query: "", lookupName: "" };
+// records matching a file the person picked; and how many of them.
+const view = { query: "", lookupName: "", limit: PAGE_SIZE };
 
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
-async function render() {
-  const records = await getRecords();
+// The records the current view could show, newest first, before the
+// "Show more" limit is applied.
+function recordsForView(records) {
   const newestFirst = records.slice().reverse();
 
-  let shown;
+  if (view.lookupName) return findByFileName(newestFirst, view.lookupName);
+  if (view.query) return newestFirst.filter((r) => matchesQuery(r, view.query));
+  return newestFirst;
+}
+
+// appendFrom: when set, the list already shows that many records and
+// only the ones after them are added (used by "Show more", so the
+// records already on screen are left untouched).
+async function render({ appendFrom = null } = {}) {
+  await pendingNoteSave;
+
+  const records = await getRecords();
+  const matches = recordsForView(records);
+  const shown = matches.slice(0, view.limit);
+  const remaining = matches.length - shown.length;
+  const showingText = remaining > 0 ? ` · showing ${shown.length}` : "";
+
   let titleText = "Recent captures";
   let countText;
   let noMatchText = "";
 
   if (view.lookupName) {
-    const matches = findByFileName(newestFirst, view.lookupName);
-    shown = matches.slice(0, MAX_RESULTS);
     titleText = "Records for " + view.lookupName;
-    countText = matches.length === 1 ? "1 match" : `${matches.length} matches`;
+    countText =
+      (matches.length === 1 ? "1 match" : `${matches.length} matches`) +
+      showingText;
     noMatchText =
-      `No record found for “${view.lookupName}”. ` +
+      `No record found for \u201C${view.lookupName}\u201D. ` +
       "It may have been renamed, saved before file names were recorded, " +
       "or saved another way.";
   } else if (view.query) {
-    const matches = newestFirst.filter((r) => matchesQuery(r, view.query));
-    shown = matches.slice(0, MAX_RESULTS);
     titleText = "Search results";
     countText =
-      `${matches.length} of ${plural(records.length, "record")}` +
-      (matches.length > shown.length ? ` · showing ${shown.length}` : "");
-    noMatchText = `Nothing in your log matches “${view.query}”.`;
+      `${matches.length} of ${plural(records.length, "record")}` + showingText;
+    noMatchText = `Nothing in your log matches \u201C${view.query}\u201D.`;
   } else {
-    shown = newestFirst.slice(0, RECENT_COUNT);
     countText = `${plural(records.length, "record")} · showing ${shown.length}`;
   }
 
@@ -690,7 +710,22 @@ async function render() {
   noMatches.textContent = noMatchText;
 
   const ul = document.querySelector("#records");
-  ul.replaceChildren(...shown.map(buildRecordItem));
+  if (appendFrom !== null && ul.children.length === appendFrom) {
+    ul.append(...shown.slice(appendFrom).map(buildRecordItem));
+  } else {
+    ul.replaceChildren(...shown.map(buildRecordItem));
+  }
+
+  const showMore = document.querySelector("#show-more");
+  showMore.hidden = remaining <= 0;
+  showMore.textContent = `Show ${Math.min(PAGE_SIZE, remaining)} more`;
+}
+
+// Each click reveals the next 20 records (or however many are left).
+function showMore() {
+  const alreadyShown = view.limit;
+  view.limit += PAGE_SIZE;
+  render({ appendFrom: alreadyShown });
 }
 
 /* ---------- Settings ---------- */
@@ -716,6 +751,7 @@ async function wireSettings() {
 function setQuery(query) {
   view.query = query.trim();
   view.lookupName = "";
+  view.limit = PAGE_SIZE;
   render();
 }
 
@@ -723,6 +759,7 @@ function lookupFile(file) {
   if (!file) return;
   view.lookupName = file.name; // only the name is used; the file is not read
   view.query = "";
+  view.limit = PAGE_SIZE;
   document.getElementById("search").value = "";
   render();
 }
@@ -730,6 +767,7 @@ function lookupFile(file) {
 function clearFilter() {
   view.query = "";
   view.lookupName = "";
+  view.limit = PAGE_SIZE;
   document.getElementById("search").value = "";
   render();
 }
@@ -772,7 +810,8 @@ function wire() {
   document.getElementById("export-json").addEventListener("click", downloadJSON);
   document.getElementById("export-csv").addEventListener("click", downloadCSV);
   document.getElementById("clear-records").addEventListener("click", clearRecords);
-  document.getElementById("view-last-20").addEventListener("click", render);
+  document.getElementById("view-last-20").addEventListener("click", () => render());
+  document.getElementById("show-more").addEventListener("click", showMore);
   document.getElementById("clear-filter").addEventListener("click", clearFilter);
 
   const search = document.getElementById("search");
